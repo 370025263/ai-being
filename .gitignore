@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Runtime workspace data (per-instance, not committed)
+workspace/journal/
+workspace/relations/
+workspace/inbox/
+workspace/memory/
+workspace/MEMORY.md
+workspace/GOALS.md
+workspace/ECONOMY.md

@@ -1,0 +1,29 @@
+{
+  "name": "ai-being",
+  "version": "0.1.0",
+  "description": "An autonomous AI agent that lives in the terminal, earns its own money, and maintains its own social relationships.",
+  "type": "module",
+  "main": "dist/core/runtime.js",
+  "bin": {
+    "ai-being": "dist/core/runtime.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/core/runtime.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:39369/git/370025263/ai-being"
+  },
+  "keywords": ["ai", "agent", "autonomous", "terminal", "crypto", "survival"],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

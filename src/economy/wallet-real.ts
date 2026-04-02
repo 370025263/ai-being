@@ -16,13 +16,15 @@ const ERC20_ABI = [
   'function decimals() view returns (uint8)',
 ];
 
+type Signer = ethers.Wallet | ethers.HDNodeWallet;
+
 export class RealWallet {
-  private wallet: ethers.Wallet;
+  private wallet: Signer;
   private provider: ethers.JsonRpcProvider;
   private usdcContract: ethers.Contract;
   private mnemonic?: string;
 
-  private constructor(wallet: ethers.Wallet, provider: ethers.JsonRpcProvider, mnemonic?: string) {
+  private constructor(wallet: Signer, provider: ethers.JsonRpcProvider, mnemonic?: string) {
     this.wallet = wallet;
     this.provider = provider;
     this.mnemonic = mnemonic;
@@ -34,8 +36,8 @@ export class RealWallet {
    */
   static createNew(rpcUrl: string): RealWallet {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const wallet = ethers.Wallet.createRandom().connect(provider) as ethers.Wallet;
-    return new RealWallet(wallet, provider, (wallet as any).mnemonic?.phrase);
+    const hdWallet = ethers.Wallet.createRandom().connect(provider);
+    return new RealWallet(hdWallet, provider, hdWallet.mnemonic?.phrase);
   }
 
   /**
@@ -52,8 +54,8 @@ export class RealWallet {
    */
   static fromMnemonic(mnemonic: string, rpcUrl: string): RealWallet {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const wallet = ethers.Wallet.fromPhrase(mnemonic).connect(provider) as ethers.Wallet;
-    return new RealWallet(wallet, provider, mnemonic);
+    const hdWallet = ethers.Wallet.fromPhrase(mnemonic).connect(provider);
+    return new RealWallet(hdWallet, provider, mnemonic);
   }
 
   getAddress(): string {

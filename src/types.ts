@@ -163,6 +163,27 @@ export interface BeingConfig {
   valuesFilePath: string;
   heartbeatIntervalMs: number;
   llm: LLMProvider;
+
+  /** OpenClaw Gateway connection (optional — enables social features) */
+  gateway?: {
+    url: string;
+    agentId?: string;
+    reconnectIntervalMs?: number;
+    maxReconnectAttempts?: number;
+  };
+
+  /** Real wallet config (optional — enables on-chain economy) */
+  wallet?: {
+    type: 'real';
+    privateKey: string;
+    rpcUrl: string;
+  } | {
+    type: 'stub';
+    initialBalance: number;
+  };
+
+  /** GitHub token for bounty scanning (optional) */
+  githubToken?: string;
 }
 
 // --- LLM (stub interface) ---

@@ -19,9 +19,11 @@ import { MemorySystem } from './memory.js';
 import { CognitionEngine } from './cognition.js';
 import { Wallet } from '../economy/wallet.js';
 import { BountyScanner } from '../economy/bounty.js';
+import { GitHubBountySource } from '../economy/bounty-github.js';
 import { X402Service } from '../economy/x402.js';
 import { Inbox } from '../social/inbox.js';
 import { RelationsManager } from '../social/relations.js';
+import { ChannelManager } from '../social/channels/channel-manager.js';
 
 export class BeingRuntime {
   private config: BeingConfig;
@@ -37,6 +39,7 @@ export class BeingRuntime {
   private x402: X402Service;
   private inbox: Inbox;
   private relations: RelationsManager;
+  private channelManager: ChannelManager | null = null;
 
   // Lifecycle
   private cycleCount = 0;
@@ -48,11 +51,25 @@ export class BeingRuntime {
     this.journal = new Journal(config.workspacePath);
     this.memory = new MemorySystem(config.workspacePath);
     this.cognition = new CognitionEngine(config.llm);
-    this.wallet = new Wallet(config.workspacePath);
-    this.bountyScanner = new BountyScanner();
-    this.x402 = new X402Service();
     this.inbox = new Inbox(config.workspacePath);
     this.relations = new RelationsManager(config.workspacePath);
+
+    // Economy: real or stub wallet
+    if (config.wallet?.type === 'real') {
+      this.wallet = new Wallet(config.workspacePath);
+      // RealWallet integration is available via wallet-real.ts for on-chain ops
+    } else {
+      const balance = config.wallet?.type === 'stub' ? config.wallet.initialBalance : 0;
+      this.wallet = new Wallet(config.workspacePath, balance);
+    }
+
+    // Bounty scanner: add GitHub source if token provided
+    this.bountyScanner = new BountyScanner();
+    if (config.githubToken) {
+      this.bountyScanner.addSource(new GitHubBountySource(config.githubToken));
+    }
+
+    this.x402 = new X402Service();
   }
 
   /**
@@ -71,6 +88,17 @@ export class BeingRuntime {
       this.inbox.init(),
       this.relations.init(),
     ]);
+
+    // Connect to OpenClaw Gateway if configured
+    if (this.config.gateway) {
+      this.channelManager = new ChannelManager(this.inbox, this.relations, {
+        url: this.config.gateway.url,
+        agentId: this.config.gateway.agentId,
+        reconnectIntervalMs: this.config.gateway.reconnectIntervalMs ?? 5000,
+        maxReconnectAttempts: this.config.gateway.maxReconnectAttempts ?? 10,
+      });
+      await this.channelManager.connect();
+    }
 
     // Index existing workspace files into memory
     const journalDir = `${this.config.workspacePath}/journal`;
@@ -154,6 +182,9 @@ export class BeingRuntime {
    */
   stop(): void {
     this.running = false;
+    if (this.channelManager) {
+      this.channelManager.disconnect();
+    }
   }
 
   /**
@@ -181,6 +212,7 @@ export class BeingRuntime {
   getJournal(): Journal { return this.journal; }
   getMemory(): MemorySystem { return this.memory; }
   getRelations(): RelationsManager { return this.relations; }
+  getChannelManager(): ChannelManager | null { return this.channelManager; }
   getBountyScanner(): BountyScanner { return this.bountyScanner; }
   getX402(): X402Service { return this.x402; }
 
